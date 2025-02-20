@@ -68,17 +68,19 @@ if base_image_file and test_image_file:
     base_file_bytes = base_image_file.read()
     test_file_bytes = test_image_file.read()
 
-    # Decode images
+    # Decode images with error handling
     base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
     test_image = cv2.imdecode(np.frombuffer(test_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
 
-    # Reset the buffer for mask generation
-    buffer_zone_mask = generate_buffer_zone_mask(cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR))
-    overlap, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask)
+    if base_image is None or test_image is None:
+        st.error("Error: Could not decode one or both uploaded images. Please upload valid image files.")
+    else:
+        buffer_zone_mask = generate_buffer_zone_mask(cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR))
+        overlap, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask)
 
-    st.image([base_image, test_image, overlap], caption=["Base Image", "Test Image", "Change Detection"], use_column_width=True, channels="GRAY")
-    st.write(f"Change Detected: {change_percentage:.2f}%")
+        st.image([base_image, test_image, overlap], caption=["Base Image", "Test Image", "Change Detection"], use_column_width=True, channels="GRAY")
+        st.write(f"Change Detected: {change_percentage:.2f}%")
 
-    if change_percentage > 5.0:
-        send_email_alert(change_percentage)
-        send_telegram_alert(change_percentage)
+        if change_percentage > 5.0:
+            send_email_alert(change_percentage)
+            send_telegram_alert(change_percentage)
