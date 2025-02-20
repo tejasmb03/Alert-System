@@ -2,48 +2,63 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import smtplib
-from email.mime.text import MIMEText
+import os
 import requests
 import streamlit as st
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 
-def send_email_alert(change_percentage):
-    sender_email = "t1jit21cse2100029@jyothyit.ac.in"
-    receiver_email = "tejasmbharadwajvishnu@gmail.com"
-    app_password = "iyoy yfwy ijaz goir"
+def send_email_alert(change_percentage, image_path):
+    sender_email = "your_email@gmail.com"
+    receiver_email = "recipient_email@gmail.com"
+    app_password = "your_app_password"
 
     subject = "Alert: Unauthorized Construction Detected!"
     body = f"Unauthorized construction detected in the buffer zone! Change detected: {change_percentage:.2f}%"
 
-    msg = MIMEText(body)
+    msg = MIMEMultipart()
     msg["Subject"] = subject
     msg["From"] = sender_email
     msg["To"] = receiver_email
+    msg.attach(MIMEText(body, "plain"))
+
+    with open(image_path, "rb") as attachment:
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(image_path)}")
+        msg.attach(part)
 
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
             server.login(sender_email, app_password)
             server.sendmail(sender_email, receiver_email, msg.as_string())
-        st.success("Email alert sent successfully!")
+        st.success("Email alert with image sent successfully!")
     except Exception as e:
         st.error(f"Error sending email: {e}")
 
-def send_telegram_alert(change_percentage):
-    bot_token = "8174600942:AAE-CSdjG1dwfHnRDX1ulw009_fybnAURIc"
-    chat_id = "921645787"
+def send_telegram_alert(change_percentage, image_path):
+    bot_token = "YOUR_TELEGRAM_BOT_TOKEN"
+    chat_id = "YOUR_CHAT_ID"
     message = f"🚨 ALERT: Unauthorized construction detected! Change: {change_percentage:.2f}%"
 
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    params = {"chat_id": chat_id, "text": message}
+    url_text = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    url_photo = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
 
     try:
-        response = requests.get(url, params=params)
-        if response.status_code == 200:
-            st.success("Telegram alert sent successfully!")
-        else:
-            st.error(f"Error sending Telegram alert: {response.text}")
+        requests.post(url_text, data={"chat_id": chat_id, "text": message})
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error sending Telegram message: {e}")
+
+    try:
+        with open(image_path, "rb") as image_file:
+            requests.post(url_photo, data={"chat_id": chat_id}, files={"photo": image_file})
+        st.success("Telegram alert with image sent successfully!")
+    except Exception as e:
+        st.error(f"Error sending Telegram image: {e}")
 
 def generate_buffer_zone_mask(base_image, buffer_width=50):
     gray_base = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
@@ -89,5 +104,7 @@ if base_image_file and test_image_file:
         st.write(f"Change Detected: {change_percentage:.2f}%")
 
         if change_percentage > 5.0:
-            send_email_alert(change_percentage)
-            send_telegram_alert(change_percentage)
+            change_image_path = "detected_change.jpg"
+            cv2.imwrite(change_image_path, overlap)
+            send_email_alert(change_percentage, change_image_path)
+            send_telegram_alert(change_percentage, change_image_path)
