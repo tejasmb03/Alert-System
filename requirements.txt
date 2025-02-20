@@ -1,7 +1,4 @@
-opencv-python-headless
+opencv-python
 numpy
 matplotlib
 requests
-streamlit
-tensorflow-cpu
-
