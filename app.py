@@ -9,7 +9,7 @@ import streamlit as st
 def send_email_alert(change_percentage):
     sender_email = "your_email@gmail.com"
     receiver_email = "recipient_email@gmail.com"
-    app_password = "your_app_password"  # Replace with your generated App Password
+    app_password = "your_app_password"
 
     subject = "Alert: Unauthorized Construction Detected!"
     body = f"Unauthorized construction detected in the buffer zone! Change detected: {change_percentage:.2f}%"
@@ -29,8 +29,8 @@ def send_email_alert(change_percentage):
         st.error(f"Error sending email: {e}")
 
 def send_telegram_alert(change_percentage):
-    bot_token = "8174600942:AAE-CSdjG1dwfHnRDX1ulw009_fybnAURIc"
-    chat_id = "921645787"
+    bot_token = "YOUR_TELEGRAM_BOT_TOKEN"
+    chat_id = "YOUR_CHAT_ID"
     message = f"🚨 ALERT: Unauthorized construction detected! Change: {change_percentage:.2f}%"
 
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
@@ -58,7 +58,6 @@ def detect_changes(base_image, test_image, buffer_zone_mask, change_threshold=5.
     test_image = cv2.resize(test_image, target_size)
     buffer_zone_mask = cv2.resize(buffer_zone_mask, target_size)
     
-    # Ensure buffer zone mask is binary
     if len(buffer_zone_mask.shape) == 3:
         buffer_zone_mask = cv2.cvtColor(buffer_zone_mask, cv2.COLOR_BGR2GRAY)
     
