@@ -58,8 +58,9 @@ def detect_changes(base_image, test_image, buffer_zone_mask, change_threshold=5.
     test_image = cv2.resize(test_image, target_size)
     buffer_zone_mask = cv2.resize(buffer_zone_mask, target_size)
     
-    # Ensure all images are grayscale
-    buffer_zone_mask = cv2.cvtColor(buffer_zone_mask, cv2.COLOR_BGR2GRAY)
+    # Ensure buffer zone mask is binary
+    if len(buffer_zone_mask.shape) == 3:
+        buffer_zone_mask = cv2.cvtColor(buffer_zone_mask, cv2.COLOR_BGR2GRAY)
     
     diff = cv2.absdiff(base_image, test_image)
     _, diff_thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
