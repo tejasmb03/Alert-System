@@ -53,8 +53,18 @@ def generate_buffer_zone_mask(base_image, buffer_width=50):
     return buffer_zone_mask
 
 def detect_changes(base_image, test_image, buffer_zone_mask, change_threshold=5.0):
+    target_size = (min(base_image.shape[1], test_image.shape[1]), min(base_image.shape[0], test_image.shape[0]))
+    base_image = cv2.resize(base_image, target_size)
+    test_image = cv2.resize(test_image, target_size)
+    buffer_zone_mask = cv2.resize(buffer_zone_mask, target_size)
+    
+    base_image = cv2.cvtColor(base_image, cv2.COLOR_GRAY2BGR)
+    test_image = cv2.cvtColor(test_image, cv2.COLOR_GRAY2BGR)
+    buffer_zone_mask = cv2.cvtColor(buffer_zone_mask, cv2.COLOR_GRAY2BGR)
+    
     diff = cv2.absdiff(base_image, test_image)
-    _, diff_thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
+    gray_diff = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+    _, diff_thresh = cv2.threshold(gray_diff, 30, 255, cv2.THRESH_BINARY)
     overlap = cv2.bitwise_and(diff_thresh, buffer_zone_mask)
     change_percentage = (np.sum(overlap > 0) / np.sum(buffer_zone_mask > 0)) * 100
     return overlap, change_percentage
@@ -64,18 +74,17 @@ base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpe
 test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"])
 
 if base_image_file and test_image_file:
-    # Read files once
     base_file_bytes = base_image_file.read()
     test_file_bytes = test_image_file.read()
 
-    # Decode images with error handling
     base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
     test_image = cv2.imdecode(np.frombuffer(test_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
 
     if base_image is None or test_image is None:
         st.error("Error: Could not decode one or both uploaded images. Please upload valid image files.")
     else:
-        buffer_zone_mask = generate_buffer_zone_mask(cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR))
+        color_base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR)
+        buffer_zone_mask = generate_buffer_zone_mask(color_base_image)
         overlap, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask)
 
         st.image([base_image, test_image, overlap], caption=["Base Image", "Test Image", "Change Detection"], use_column_width=True, channels="GRAY")
