@@ -55,6 +55,22 @@ def send_telegram_alert(change_percentage, alert_image_path):
     except Exception as e:
         st.error(f"Error sending Telegram alert: {e}")
 
+def generate_buffer_zone_mask(base_image_path, buffer_zone_mask_path, buffer_width=50):
+    base_image = cv2.imread(base_image_path)
+    if base_image is None:
+        st.error("Error: Base image could not be loaded. Check the file path.")
+        return False
+    
+    gray_base = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
+    _, water_mask = cv2.threshold(gray_base, 100, 255, cv2.THRESH_BINARY_INV)
+    
+    kernel = np.ones((buffer_width, buffer_width), np.uint8)
+    buffer_zone_mask = cv2.dilate(water_mask, kernel, iterations=1)
+    
+    cv2.imwrite(buffer_zone_mask_path, buffer_zone_mask)
+    st.success("Buffer zone mask generated successfully!")
+    return True
+
 def detect_changes(base_image_path, test_image_path, buffer_zone_mask_path, alert_image_path, change_threshold=5.0):
     base_image = cv2.imread(base_image_path)
     test_image = cv2.imread(test_image_path)
@@ -67,8 +83,10 @@ def detect_changes(base_image_path, test_image_path, buffer_zone_mask_path, aler
         st.error("Error: Test image could not be loaded. Please check the file.")
         return
     if buffer_zone_mask is None:
-        st.error("Error: Buffer zone mask is missing. Generate it first.")
-        return
+        st.warning("Buffer zone mask is missing. Generating now...")
+        if not generate_buffer_zone_mask(base_image_path, buffer_zone_mask_path):
+            return
+        buffer_zone_mask = cv2.imread(buffer_zone_mask_path, cv2.IMREAD_GRAYSCALE)
     
     target_size = (min(base_image.shape[1], test_image.shape[1]), min(base_image.shape[0], test_image.shape[0]))
     base_image = cv2.resize(base_image, target_size)
