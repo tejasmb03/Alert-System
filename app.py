@@ -1,3 +1,4 @@
+import os
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,7 +30,7 @@ def send_email_alert(change_percentage, receiver_email):
 def send_telegram_alert(change_percentage, alert_image_path):
     bot_token = "your_telegram_bot_token"
     chat_id = "your_chat_id"
-    message = f"🚨 ALERT: Unauthorized construction detected! Change: {change_percentage:.2f}%"
+    message = f"\U0001F6A8 ALERT: Unauthorized construction detected! Change: {change_percentage:.2f}%"
     
     url_text = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     params_text = {"chat_id": chat_id, "text": message}
@@ -50,9 +51,13 @@ def send_telegram_alert(change_percentage, alert_image_path):
         print(f"Error sending Telegram alert: {e}")
 
 def generate_buffer_zone_mask(base_image_path, buffer_zone_mask_path, buffer_width=50):
+    if not os.path.exists(base_image_path):
+        print(f"Error: {base_image_path} not found.")
+        return False
+    
     base_image = cv2.imread(base_image_path)
     if base_image is None:
-        print("Error: Base image could not be loaded. Check the file path.")
+        print("Error: Base image could not be loaded. Check the file format.")
         return False
     
     gray_base = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
@@ -66,18 +71,17 @@ def generate_buffer_zone_mask(base_image_path, buffer_zone_mask_path, buffer_wid
     return True
 
 def detect_changes(base_image_path, test_image_path, buffer_zone_mask_path, alert_image_path, change_threshold=5.0, email=None):
+    if not all(os.path.exists(p) for p in [base_image_path, test_image_path, buffer_zone_mask_path]):
+        print("Error: One or more image files not found. Check the file paths.")
+        return
+    
     base_image = cv2.imread(base_image_path)
     test_image = cv2.imread(test_image_path)
     buffer_zone_mask = cv2.imread(buffer_zone_mask_path, cv2.IMREAD_GRAYSCALE)
     
     if base_image is None or test_image is None:
-        print("Error: One or more images could not be loaded. Please check the files.")
+        print("Error: Unable to load one or more images. Check file formats.")
         return
-    if buffer_zone_mask is None:
-        print("Buffer zone mask is missing. Generating now...")
-        if not generate_buffer_zone_mask(base_image_path, buffer_zone_mask_path):
-            return
-        buffer_zone_mask = cv2.imread(buffer_zone_mask_path, cv2.IMREAD_GRAYSCALE)
     
     target_size = (min(base_image.shape[1], test_image.shape[1]), min(base_image.shape[0], test_image.shape[0]))
     base_image = cv2.resize(base_image, target_size)
