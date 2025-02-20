@@ -4,4 +4,4 @@ matplotlib
 requests
 streamlit
 tensorflow-cpu
-bcrypt 
+
