@@ -58,13 +58,11 @@ def detect_changes(base_image, test_image, buffer_zone_mask, change_threshold=5.
     test_image = cv2.resize(test_image, target_size)
     buffer_zone_mask = cv2.resize(buffer_zone_mask, target_size)
     
-    base_image = cv2.cvtColor(base_image, cv2.COLOR_GRAY2BGR)
-    test_image = cv2.cvtColor(test_image, cv2.COLOR_GRAY2BGR)
-    buffer_zone_mask = cv2.cvtColor(buffer_zone_mask, cv2.COLOR_GRAY2BGR)
+    # Ensure all images are grayscale
+    buffer_zone_mask = cv2.cvtColor(buffer_zone_mask, cv2.COLOR_BGR2GRAY)
     
     diff = cv2.absdiff(base_image, test_image)
-    gray_diff = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-    _, diff_thresh = cv2.threshold(gray_diff, 30, 255, cv2.THRESH_BINARY)
+    _, diff_thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
     overlap = cv2.bitwise_and(diff_thresh, buffer_zone_mask)
     change_percentage = (np.sum(overlap > 0) / np.sum(buffer_zone_mask > 0)) * 100
     return overlap, change_percentage
