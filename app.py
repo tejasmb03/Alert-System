@@ -7,9 +7,9 @@ import requests
 import streamlit as st
 
 def send_email_alert(change_percentage):
-    sender_email = "t1jit21cse210029@jyothyit.ac.in"
+    sender_email = "t1jit21cse2100029@jyothyit.ac.in"
     receiver_email = "tejasmbharadwajvishnu@gmail.com"
-    app_password = "nhmq eknr fwfy ccsa"
+    app_password = "iyoy yfwy ijaz goir"
 
     subject = "Alert: Unauthorized Construction Detected!"
     body = f"Unauthorized construction detected in the buffer zone! Change detected: {change_percentage:.2f}%"
