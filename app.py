@@ -60,8 +60,14 @@ def detect_changes(base_image_path, test_image_path, buffer_zone_mask_path, aler
     test_image = cv2.imread(test_image_path)
     buffer_zone_mask = cv2.imread(buffer_zone_mask_path, cv2.IMREAD_GRAYSCALE)
     
-    if base_image is None or test_image is None or buffer_zone_mask is None:
-        st.error("Error: One or more images could not be loaded.")
+    if base_image is None:
+        st.error("Error: Base image could not be loaded. Please check the file.")
+        return
+    if test_image is None:
+        st.error("Error: Test image could not be loaded. Please check the file.")
+        return
+    if buffer_zone_mask is None:
+        st.error("Error: Buffer zone mask is missing. Generate it first.")
         return
     
     target_size = (min(base_image.shape[1], test_image.shape[1]), min(base_image.shape[0], test_image.shape[0]))
