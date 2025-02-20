@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import smtplib
 from email.mime.text import MIMEText
 import requests
+import streamlit as st
 
 def send_email_alert(change_percentage, receiver_email):
     sender_email = "your_email@gmail.com"
