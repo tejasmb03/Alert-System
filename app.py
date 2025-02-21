@@ -103,6 +103,14 @@ with col2:
 with col3:
     receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
+col1, col2, col3 = st.columns(3)
+with col1:
+    email_selected = st.checkbox("Email")
+with col2:
+    telegram_selected = st.checkbox("Telegram")
+with col3:
+    both_selected = st.checkbox("Both")
+
 done_clicked = st.button("Done")
 
 if done_clicked and base_image_file and test_image_file and receiver_email:
@@ -125,8 +133,13 @@ if done_clicked and base_image_file and test_image_file and receiver_email:
     if change_percentage > 5.0:
         change_image_path = "detected_change.jpg"
         cv2.imwrite(change_image_path, result_image)
-        send_email_alert(change_percentage, change_image_path, receiver_email)
-        send_telegram_alert(change_percentage, change_image_path)
+        if email_selected:
+            send_email_alert(change_percentage, change_image_path, receiver_email)
+        if telegram_selected:
+            send_telegram_alert(change_percentage, change_image_path)
+        if both_selected:
+            send_email_alert(change_percentage, change_image_path, receiver_email)
+            send_telegram_alert(change_percentage, change_image_path)
 
     if st.button("Clear and Restart", type="primary"):
         reset_session()
