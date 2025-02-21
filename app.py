@@ -38,6 +38,23 @@ def send_email_alert(change_percentage, image_path, receiver_email):
     except Exception as e:
         st.error(f"Error sending email: {e}")
 
+def send_telegram_alert(change_percentage, image_path, bot_token, chat_id):
+    message = f"🚨 ALERT: Unauthorized construction detected! Change: {change_percentage:.2f}%"
+    url_text = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    url_photo = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
+    
+    try:
+        requests.post(url_text, data={"chat_id": chat_id, "text": message})
+    except Exception as e:
+        st.error(f"Error sending Telegram message: {e}")
+    
+    try:
+        with open(image_path, "rb") as image_file:
+            requests.post(url_photo, data={"chat_id": chat_id}, files={"photo": image_file})
+        st.success("Telegram alert with image sent successfully!")
+    except Exception as e:
+        st.error(f"Error sending Telegram image: {e}")
+
 def generate_buffer_zone_mask(base_image, buffer_width=50):
     gray_base = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
     _, water_mask = cv2.threshold(gray_base, 100, 255, cv2.THRESH_BINARY_INV)
@@ -64,9 +81,11 @@ st.title("Unauthorized Construction Detection")
 base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"])
 test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"])
 receiver_email = st.text_input("Enter recipient email for alerts:")
+bot_token = st.text_input("Enter Telegram Bot Token:", type="password")
+chat_id = st.text_input("Enter Telegram Chat ID:")
 change_threshold = st.slider("Change Detection Threshold (%)", 1, 100, 5)
 
-if base_image_file and test_image_file and receiver_email:
+if base_image_file and test_image_file and receiver_email and bot_token and chat_id:
     base_file_bytes = base_image_file.read()
     test_file_bytes = test_image_file.read()
 
@@ -92,3 +111,5 @@ if base_image_file and test_image_file and receiver_email:
             change_image_path = "detected_change.jpg"
             cv2.imwrite(change_image_path, overlap)
             send_email_alert(change_percentage, change_image_path, receiver_email)
+            send_telegram_alert(change_percentage, change_image_path, bot_token, chat_id)
+
