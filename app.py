@@ -74,15 +74,9 @@ with col2:
 with col3:
     receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
-st.markdown("<h6 style='font-size: 16px;'>Select Alert Method:</h6>", unsafe_allow_html=True)
+st.markdown("<h6 style='font-size: 18px; font-weight: bold;'>Select Alert Method:</h6>", unsafe_allow_html=True)
 
-alert_methods = st.columns(3)
-with alert_methods[0]:
-    email_selected = st.checkbox("Email", key="email_alert")
-with alert_methods[1]:
-    telegram_selected = st.checkbox("Telegram", key="telegram_alert")
-with alert_methods[2]:
-    both_selected = st.checkbox("Both", key="both_alert")
+alert_method = st.radio("Select Alert Method:", ["None", "Email", "Telegram", "Both"], index=0, key="alert_method")
 
 done_clicked = st.button("Done")
 
@@ -91,8 +85,8 @@ if done_clicked:
         st.error("Please upload both images before proceeding.")
     elif not receiver_email:
         st.error("Please enter a recipient email address.")
-    elif not (email_selected or telegram_selected or both_selected):
-        st.error("Please select at least one alert method.")
+    elif alert_method == "None":
+        st.error("Please select an alert method.")
     else:
         base_file_bytes = base_image_file.read()
         test_file_bytes = test_image_file.read()
@@ -102,11 +96,11 @@ if done_clicked:
         col1.image(base_image, caption="Base Image", use_column_width=True, channels="GRAY")
         col2.image(test_image, caption="Test Image", use_column_width=True, channels="GRAY")
         
-        if email_selected:
+        if alert_method == "Email":
             send_email_alert(10, "detected_change.jpg", receiver_email)
-        if telegram_selected:
+        elif alert_method == "Telegram":
             send_telegram_alert(10, "detected_change.jpg")
-        if both_selected:
+        elif alert_method == "Both":
             send_email_alert(10, "detected_change.jpg", receiver_email)
             send_telegram_alert(10, "detected_change.jpg")
     
