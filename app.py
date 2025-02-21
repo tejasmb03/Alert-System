@@ -122,5 +122,11 @@ if done_clicked and base_image_file and test_image_file and receiver_email:
     col3.image(result_image, caption="Change Detection", use_column_width=True, channels="GRAY")
     st.write(f"Change Detected: {change_percentage:.2f}%")
 
+    if change_percentage > 5.0:
+        change_image_path = "detected_change.jpg"
+        cv2.imwrite(change_image_path, result_image)
+        send_email_alert(change_percentage, change_image_path, receiver_email)
+        send_telegram_alert(change_percentage, change_image_path)
+
     if st.button("Clear and Restart", type="primary"):
         reset_session()
