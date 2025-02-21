@@ -77,7 +77,10 @@ def detect_changes(base_image, test_image):
         cv2.rectangle(base_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
     
     change_percentage = (np.sum(thresh > 0) / thresh.size) * 100
-    return base_image, change_percentage
+    
+    output_path = "detected_change.jpg"
+    cv2.imwrite(output_path, base_image)
+    return base_image, change_percentage, output_path
 
 def reset_session():
     for key in list(st.session_state.keys()):
@@ -114,7 +117,7 @@ if done_clicked:
         base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR)
         test_image = cv2.imdecode(np.frombuffer(test_file_bytes, np.uint8), cv2.IMREAD_COLOR)
         
-        result_image, change_percentage = detect_changes(base_image, test_image)
+        result_image, change_percentage, output_path = detect_changes(base_image, test_image)
         
         if result_image is None:
             st.success("No unauthorized construction detected.")
@@ -124,12 +127,12 @@ if done_clicked:
             col3.image(result_image, caption=f"Detected Changes: {change_percentage:.2f}%", use_column_width=True)
             
             if alert_method == "Email":
-                send_email_alert(change_percentage, "detected_change.jpg", receiver_email)
+                send_email_alert(change_percentage, output_path, receiver_email)
             elif alert_method == "Telegram":
-                send_telegram_alert(change_percentage, "detected_change.jpg")
+                send_telegram_alert(change_percentage, output_path)
             elif alert_method == "Both":
-                send_email_alert(change_percentage, "detected_change.jpg", receiver_email)
-                send_telegram_alert(change_percentage, "detected_change.jpg")
+                send_email_alert(change_percentage, output_path, receiver_email)
+                send_telegram_alert(change_percentage, output_path)
     
 if st.button("Clear and Restart", type="primary"):
     reset_session()
