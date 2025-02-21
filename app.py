@@ -94,8 +94,12 @@ def reset_session():
 st.set_page_config(layout="wide")
 st.title("Unauthorized Construction Detection")
 
-base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"], key="base")
-test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
+col1, col2 = st.columns(2)
+with col1:
+    base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"], key="base")
+with col2:
+    test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
+
 receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
 if base_image_file and test_image_file and receiver_email:
@@ -112,11 +116,6 @@ if base_image_file and test_image_file and receiver_email:
         buffer_zone_mask = generate_buffer_zone_mask(color_base_image)
         result_image, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.image(base_image, caption="Base Image", use_column_width=True, channels="GRAY")
-        with col2:
-            st.image(test_image, caption="Test Image", use_column_width=True, channels="GRAY")
         st.image(result_image, caption="Change Detection with Water as Black", use_column_width=True, channels="GRAY")
         st.write(f"Change Detected: {change_percentage:.2f}%")
 
