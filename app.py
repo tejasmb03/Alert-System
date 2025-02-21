@@ -101,6 +101,7 @@ with col2:
     test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
 
 receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
+alert_option = st.radio("Select alert method:", ("Email", "Telegram", "Both"))
 
 if base_image_file and test_image_file and receiver_email:
     base_file_bytes = base_image_file.read()
@@ -122,8 +123,13 @@ if base_image_file and test_image_file and receiver_email:
         if change_percentage > 5.0:
             change_image_path = "detected_change.jpg"
             cv2.imwrite(change_image_path, result_image)
-            send_email_alert(change_percentage, change_image_path, receiver_email)
-            send_telegram_alert(change_percentage, change_image_path)
+            if alert_option == "Email":
+                send_email_alert(change_percentage, change_image_path, receiver_email)
+            elif alert_option == "Telegram":
+                send_telegram_alert(change_percentage, change_image_path)
+            else:
+                send_email_alert(change_percentage, change_image_path, receiver_email)
+                send_telegram_alert(change_percentage, change_image_path)
 
         if st.button("Clear and Restart"):
             reset_session()
