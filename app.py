@@ -119,4 +119,4 @@ if base_image_file and test_image_file and receiver_email:
 
         if st.button("Clear and Restart"):
             st.session_state.clear()
-            st.experimental_rerun()
+            st.rerun()
