@@ -103,7 +103,7 @@ with col2:
 with col3:
     receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
-st.markdown("<h6>Select Alert Method:</h5>", unsafe_allow_html=True)
+st.markdown("<h6>Select Alert Method:</h4>", unsafe_allow_html=True)
 
 with st.container():
     row = st.columns(3)
