@@ -64,7 +64,7 @@ def generate_buffer_zone_mask(base_image, buffer_width=50):
     buffer_zone_mask = cv2.dilate(water_mask, kernel, iterations=1)
     return buffer_zone_mask
 
-def detect_changes(base_image, test_image, buffer_zone_mask, change_threshold):
+def detect_changes(base_image, test_image, buffer_zone_mask):
     target_size = (min(base_image.shape[1], test_image.shape[1]), min(base_image.shape[0], test_image.shape[0]))
     base_image = cv2.resize(base_image, target_size)
     test_image = cv2.resize(test_image, target_size)
@@ -88,7 +88,6 @@ st.title("Unauthorized Construction Detection")
 base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"])
 test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"])
 receiver_email = st.text_input("Enter recipient email for alerts:")
-change_threshold = st.slider("Change Detection Threshold (%)", 1, 100, 5)
 
 if base_image_file and test_image_file and receiver_email:
     base_file_bytes = base_image_file.read()
@@ -102,7 +101,7 @@ if base_image_file and test_image_file and receiver_email:
     else:
         color_base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR)
         buffer_zone_mask = generate_buffer_zone_mask(color_base_image)
-        result_image, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask, change_threshold)
+        result_image, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask)
 
         col1, col2 = st.columns(2)
         with col1:
@@ -112,7 +111,7 @@ if base_image_file and test_image_file and receiver_email:
         st.image(result_image, caption="Change Detection with Water as Black", use_column_width=True, channels="GRAY")
         st.write(f"Change Detected: {change_percentage:.2f}%")
 
-        if change_percentage > change_threshold:
+        if change_percentage > 5.0:
             change_image_path = "detected_change.jpg"
             cv2.imwrite(change_image_path, result_image)
             send_email_alert(change_percentage, change_image_path, receiver_email)
