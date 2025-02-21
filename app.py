@@ -83,6 +83,7 @@ def detect_changes(base_image, test_image, buffer_zone_mask):
     result_image = np.zeros_like(base_image)
     result_image[buffer_zone_mask > 0] = 0  # Make water black
     result_image[overlap > 0] = 255  # Highlight changes
+    result_image = cv2.resize(result_image, (result_image.shape[1] // 2, result_image.shape[0] // 2))
     
     return result_image, change_percentage
 
@@ -94,48 +95,25 @@ def reset_session():
 st.set_page_config(layout="wide")
 st.title("Unauthorized Construction Detection")
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
     base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"], key="base")
 with col2:
     test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
 
-receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
-col1, col2, col3 = st.columns(3)
-with col1:
-    email_selected = st.checkbox("Email")
-with col2:
-    telegram_selected = st.checkbox("Telegram")
-with col3:
-    both_selected = st.checkbox("Both")
-
-if base_image_file and test_image_file and receiver_email:
+if base_image_file and test_image_file:
     base_file_bytes = base_image_file.read()
     test_file_bytes = test_image_file.read()
 
     base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
     test_image = cv2.imdecode(np.frombuffer(test_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
 
-    if base_image is None or test_image is None:
-        st.error("Error: Could not decode one or both uploaded images. Please upload valid image files.")
-    else:
-        color_base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR)
-        buffer_zone_mask = generate_buffer_zone_mask(color_base_image)
-        result_image, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask)
+    col1.image(base_image, caption="Base Image", use_column_width=True, channels="GRAY")
+    col2.image(test_image, caption="Test Image", use_column_width=True, channels="GRAY")
 
-        st.image(result_image, caption="Change Detection with Water as Black", use_column_width=True, channels="GRAY")
-        st.write(f"Change Detected: {change_percentage:.2f}%")
+    color_base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR)
+    buffer_zone_mask = generate_buffer_zone_mask(color_base_image)
+    result_image, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask)
 
-        if change_percentage > 5.0:
-            change_image_path = "detected_change.jpg"
-            cv2.imwrite(change_image_path, result_image)
-            if email_selected:
-                send_email_alert(change_percentage, change_image_path, receiver_email)
-            if telegram_selected:
-                send_telegram_alert(change_percentage, change_image_path)
-            if both_selected:
-                send_email_alert(change_percentage, change_image_path, receiver_email)
-                send_telegram_alert(change_percentage, change_image_path)
-
-        if st.button("Clear and Restart", type="primary"):
-            reset_session()
+    col3.image(result_image, caption="Change Detection", use_column_width=True, channels="GRAY")
+    st.write(f"Change Detected: {change_percentage:.2f}%")
