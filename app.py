@@ -101,7 +101,13 @@ with col2:
     test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
 
 receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
-alert_option = st.radio("Select alert method:", ("Email", "Telegram", "Both"))
+col1, col2, col3 = st.columns(3)
+with col1:
+    alert_option = st.radio("Select alert method:", ("Email",))
+with col2:
+    alert_option = st.radio(" ", ("Telegram",))
+with col3:
+    alert_option = st.radio(" ", ("Both",))
 
 if base_image_file and test_image_file and receiver_email:
     base_file_bytes = base_image_file.read()
