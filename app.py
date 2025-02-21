@@ -60,6 +60,8 @@ def send_telegram_alert(change_percentage, image_path):
         st.error(f"Error sending Telegram image: {e}")
 
 def detect_changes(base_image, test_image):
+    test_image = cv2.resize(test_image, (base_image.shape[1], base_image.shape[0]))
+    
     base_gray = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
     test_gray = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
     
@@ -70,7 +72,7 @@ def detect_changes(base_image, test_image):
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if len(contours) == 0:
-        return None, 0.0
+        return None, 0.0, None
     
     for c in contours:
         (x, y, w, h) = cv2.boundingRect(c)
