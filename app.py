@@ -103,13 +103,16 @@ with col2:
 with col3:
     receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
-st.markdown("<small style='font-size:12px;'>### Select Alert Method:</small>", unsafe_allow_html=True)
-col1, col2, col3 = st.columns(3)
+st.markdown("<small style='font-size:12px;'>Select Alert Method:</small>", unsafe_allow_html=True)
 
 with st.container():
-    email_selected = st.checkbox("Email", key="email_alert")
-    telegram_selected = st.checkbox("Telegram", key="telegram_alert")
-    both_selected = st.checkbox("Both", key="both_alert")
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        email_selected = st.checkbox("Email", key="email_alert")
+    with col2:
+        telegram_selected = st.checkbox("Telegram", key="telegram_alert")
+    with col3:
+        both_selected = st.checkbox("Both", key="both_alert")
 
 done_clicked = st.button("Done")
 
