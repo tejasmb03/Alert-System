@@ -77,7 +77,12 @@ def detect_changes(base_image, test_image, buffer_zone_mask, change_threshold):
     _, diff_thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
     overlap = cv2.bitwise_and(diff_thresh, buffer_zone_mask)
     change_percentage = (np.sum(overlap > 0) / np.sum(buffer_zone_mask > 0)) * 100
-    return overlap, change_percentage
+    
+    result_image = np.zeros_like(base_image)
+    result_image[buffer_zone_mask > 0] = 0  # Make water black
+    result_image[overlap > 0] = 255  # Highlight changes
+    
+    return result_image, change_percentage
 
 st.title("Unauthorized Construction Detection")
 base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"])
@@ -97,18 +102,18 @@ if base_image_file and test_image_file and receiver_email:
     else:
         color_base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR)
         buffer_zone_mask = generate_buffer_zone_mask(color_base_image)
-        overlap, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask, change_threshold)
+        result_image, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask, change_threshold)
 
         col1, col2 = st.columns(2)
         with col1:
             st.image(base_image, caption="Base Image", use_column_width=True, channels="GRAY")
         with col2:
             st.image(test_image, caption="Test Image", use_column_width=True, channels="GRAY")
-        st.image(overlap, caption="Change Detection", use_column_width=True, channels="GRAY")
+        st.image(result_image, caption="Change Detection with Water as Black", use_column_width=True, channels="GRAY")
         st.write(f"Change Detected: {change_percentage:.2f}%")
 
         if change_percentage > change_threshold:
             change_image_path = "detected_change.jpg"
-            cv2.imwrite(change_image_path, overlap)
+            cv2.imwrite(change_image_path, result_image)
             send_email_alert(change_percentage, change_image_path, receiver_email)
             send_telegram_alert(change_percentage, change_image_path)
