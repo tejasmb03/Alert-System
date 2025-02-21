@@ -38,7 +38,9 @@ def send_email_alert(change_percentage, image_path, receiver_email):
     except Exception as e:
         st.error(f"Error sending email: {e}")
 
-def send_telegram_alert(change_percentage, image_path, bot_token, chat_id):
+def send_telegram_alert(change_percentage, image_path):
+    bot_token = "8174600942:AAE-CSdjG1dwfHnRDX1ulw009_fybnAURIc"
+    chat_id = "921645787"
     message = f"🚨 ALERT: Unauthorized construction detected! Change: {change_percentage:.2f}%"
     url_text = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     url_photo = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
@@ -81,11 +83,9 @@ st.title("Unauthorized Construction Detection")
 base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"])
 test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"])
 receiver_email = st.text_input("Enter recipient email for alerts:")
-bot_token = st.text_input("Enter Telegram Bot Token:", type="password")
-chat_id = st.text_input("Enter Telegram Chat ID:")
 change_threshold = st.slider("Change Detection Threshold (%)", 1, 100, 5)
 
-if base_image_file and test_image_file and receiver_email and bot_token and chat_id:
+if base_image_file and test_image_file and receiver_email:
     base_file_bytes = base_image_file.read()
     test_file_bytes = test_image_file.read()
 
@@ -111,5 +111,4 @@ if base_image_file and test_image_file and receiver_email and bot_token and chat
             change_image_path = "detected_change.jpg"
             cv2.imwrite(change_image_path, overlap)
             send_email_alert(change_percentage, change_image_path, receiver_email)
-            send_telegram_alert(change_percentage, change_image_path, bot_token, chat_id)
-
+            send_telegram_alert(change_percentage, change_image_path)
