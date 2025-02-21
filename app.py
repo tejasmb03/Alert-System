@@ -60,22 +60,23 @@ def send_telegram_alert(change_percentage, image_path):
 
 def generate_buffer_zone_mask(base_image, buffer_width=50):
     gray_base = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
-    _, water_mask = cv2.threshold(gray_base, 100, 255, cv2.THRESH_BINARY_INV)
+    edges = cv2.Canny(gray_base, 50, 150)
     kernel = np.ones((buffer_width, buffer_width), np.uint8)
-    buffer_zone_mask = cv2.dilate(water_mask, kernel, iterations=1)
+    buffer_zone_mask = cv2.dilate(edges, kernel, iterations=1)
     return buffer_zone_mask
 
 def detect_changes(base_image, test_image, buffer_zone_mask):
     target_size = (min(base_image.shape[1], test_image.shape[1]), min(base_image.shape[0], test_image.shape[0]))
-    base_image = cv2.resize(base_image, target_size)
-    test_image = cv2.resize(test_image, target_size)
-    buffer_zone_mask = cv2.resize(buffer_zone_mask, target_size)
+    base_image = cv2.resize(base_image, target_size, interpolation=cv2.INTER_AREA)
+    test_image = cv2.resize(test_image, target_size, interpolation=cv2.INTER_AREA)
+    buffer_zone_mask = cv2.resize(buffer_zone_mask, target_size, interpolation=cv2.INTER_AREA)
     
     if len(buffer_zone_mask.shape) == 3:
         buffer_zone_mask = cv2.cvtColor(buffer_zone_mask, cv2.COLOR_BGR2GRAY)
     
     diff = cv2.absdiff(base_image, test_image)
-    _, diff_thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
+    blurred_diff = cv2.GaussianBlur(diff, (5, 5), 0)
+    _, diff_thresh = cv2.threshold(blurred_diff, 30, 255, cv2.THRESH_BINARY)
     overlap = cv2.bitwise_and(diff_thresh, buffer_zone_mask)
     change_percentage = (np.sum(overlap > 0) / np.sum(buffer_zone_mask > 0)) * 100
     
@@ -90,11 +91,13 @@ def reset_session():
         del st.session_state[key]
     st.rerun()
 
+st.set_page_config(layout="wide")
 st.title("Unauthorized Construction Detection")
 
-base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"], key="base")
-test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
-receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
+with st.sidebar:
+    base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"], key="base")
+    test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
+    receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
 if base_image_file and test_image_file and receiver_email:
     base_file_bytes = base_image_file.read()
@@ -124,5 +127,5 @@ if base_image_file and test_image_file and receiver_email:
             send_email_alert(change_percentage, change_image_path, receiver_email)
             send_telegram_alert(change_percentage, change_image_path)
 
-if st.button("Clear and Restart"):
+if st.sidebar.button("Clear and Restart"):
     reset_session()
