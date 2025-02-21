@@ -90,10 +90,10 @@ def reset_session():
     st.rerun()
 
 st.title("Unauthorized Construction Detection")
-receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
 base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"], key="base")
 test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
+receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
 if base_image_file and test_image_file and receiver_email:
     base_file_bytes = base_image_file.read()
