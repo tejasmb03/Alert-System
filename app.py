@@ -20,6 +20,7 @@ def send_email_alert(change_percentage, image_path, receiver_email):
     msg["Subject"] = subject
     msg["From"] = sender_email
     msg["To"] = receiver_email
+    
     msg.attach(MIMEText(body, "plain"))
 
     with open(image_path, "rb") as attachment:
@@ -34,7 +35,7 @@ def send_email_alert(change_percentage, image_path, receiver_email):
             server.starttls()
             server.login(sender_email, app_password)
             server.sendmail(sender_email, receiver_email, msg.as_string())
-        st.success("Email alert with image sent successfully!")
+        st.success("Email alert with message and image sent successfully!")
     except Exception as e:
         st.error(f"Error sending email: {e}")
 
