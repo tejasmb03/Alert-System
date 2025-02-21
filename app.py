@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
-import smtplib 
+import smtplib
 import os
 import requests
 import streamlit as st
+from skimage.metrics import structural_similarity as ssim
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -58,6 +59,23 @@ def send_telegram_alert(change_percentage, image_path):
     except Exception as e:
         st.error(f"Error sending Telegram image: {e}")
 
+def detect_changes(base_image, test_image):
+    base_gray = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
+    test_gray = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
+    
+    (score, diff) = ssim(base_gray, test_gray, full=True)
+    diff = (diff * 255).astype("uint8")
+    
+    thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY_INV)[1]
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    for c in contours:
+        (x, y, w, h) = cv2.boundingRect(c)
+        cv2.rectangle(base_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+    
+    change_percentage = (np.sum(thresh > 0) / thresh.size) * 100
+    return base_image, change_percentage
+
 def reset_session():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
@@ -74,7 +92,7 @@ with col2:
 with col3:
     receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
-st.markdown("<h6 style='font-size: 18px; font-weight: bold;'>Select Alert Method:</h6>", unsafe_allow_html=True)
+st.markdown("<h6 style='font-size: 20px; font-weight: bold; background-color: white; padding: 10px;'>Select Alert Method:</h6>", unsafe_allow_html=True)
 
 alert_method = st.radio("Select Alert Method:", ["None", "Email", "Telegram", "Both"], index=0, key="alert_method")
 
@@ -90,19 +108,22 @@ if done_clicked:
     else:
         base_file_bytes = base_image_file.read()
         test_file_bytes = test_image_file.read()
-        base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
-        test_image = cv2.imdecode(np.frombuffer(test_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
+        base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR)
+        test_image = cv2.imdecode(np.frombuffer(test_file_bytes, np.uint8), cv2.IMREAD_COLOR)
         
-        col1.image(base_image, caption="Base Image", use_column_width=True, channels="GRAY")
-        col2.image(test_image, caption="Test Image", use_column_width=True, channels="GRAY")
+        result_image, change_percentage = detect_changes(base_image, test_image)
+        
+        col1.image(base_image, caption="Base Image", use_column_width=True)
+        col2.image(test_image, caption="Test Image", use_column_width=True)
+        col3.image(result_image, caption=f"Detected Changes: {change_percentage:.2f}%", use_column_width=True)
         
         if alert_method == "Email":
-            send_email_alert(10, "detected_change.jpg", receiver_email)
+            send_email_alert(change_percentage, "detected_change.jpg", receiver_email)
         elif alert_method == "Telegram":
-            send_telegram_alert(10, "detected_change.jpg")
+            send_telegram_alert(change_percentage, "detected_change.jpg")
         elif alert_method == "Both":
-            send_email_alert(10, "detected_change.jpg", receiver_email)
-            send_telegram_alert(10, "detected_change.jpg")
+            send_email_alert(change_percentage, "detected_change.jpg", receiver_email)
+            send_telegram_alert(change_percentage, "detected_change.jpg")
     
 if st.button("Clear and Restart", type="primary"):
     reset_session()
