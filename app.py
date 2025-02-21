@@ -103,13 +103,10 @@ with col2:
 with col3:
     receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
-col1, col2, col3 = st.columns(3)
-with col1:
-    email_selected = st.checkbox("Email")
-with col2:
-    telegram_selected = st.checkbox("Telegram")
-with col3:
-    both_selected = st.checkbox("Both")
+st.write("Select Alert Method:")
+email_selected = st.checkbox("Email")
+telegram_selected = st.checkbox("Telegram")
+both_selected = st.checkbox("Both")
 
 done_clicked = st.button("Done")
 
