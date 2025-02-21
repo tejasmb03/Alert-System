@@ -118,4 +118,5 @@ if base_image_file and test_image_file and receiver_email:
             send_telegram_alert(change_percentage, change_image_path)
 
         if st.button("Clear and Restart"):
+            st.session_state.clear()
             st.experimental_rerun()
