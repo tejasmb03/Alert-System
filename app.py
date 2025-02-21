@@ -76,13 +76,13 @@ def detect_changes(base_image, test_image):
     
     for c in contours:
         (x, y, w, h) = cv2.boundingRect(c)
-        cv2.rectangle(base_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        cv2.rectangle(test_image, (x, y), (x + w, y + h), (0, 0, 255), 2)
     
     change_percentage = (np.sum(thresh > 0) / thresh.size) * 100
     
     output_path = "detected_change.jpg"
-    cv2.imwrite(output_path, base_image)
-    return base_image, change_percentage, output_path
+    cv2.imwrite(output_path, test_image)
+    return test_image, change_percentage, output_path
 
 def reset_session():
     for key in list(st.session_state.keys()):
@@ -125,7 +125,7 @@ if done_clicked:
             st.success("No unauthorized construction detected.")
         else:
             col1.image(base_image, caption="Base Image", use_column_width=True)
-            col2.image(test_image, caption="Test Image", use_column_width=True)
+            col2.image(test_image, caption="Test Image with Detected Changes", use_column_width=True)
             col3.image(result_image, caption=f"Detected Changes: {change_percentage:.2f}%", use_column_width=True)
             
             if alert_method == "Email":
