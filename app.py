@@ -92,37 +92,36 @@ def reset_session():
 st.title("Unauthorized Construction Detection")
 receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
-if st.button("Result"):
-    base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"], key="base")
-    test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
+base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"], key="base")
+test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
 
-    if base_image_file and test_image_file and receiver_email:
-        base_file_bytes = base_image_file.read()
-        test_file_bytes = test_image_file.read()
+if base_image_file and test_image_file and receiver_email:
+    base_file_bytes = base_image_file.read()
+    test_file_bytes = test_image_file.read()
 
-        base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
-        test_image = cv2.imdecode(np.frombuffer(test_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
+    base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
+    test_image = cv2.imdecode(np.frombuffer(test_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
 
-        if base_image is None or test_image is None:
-            st.error("Error: Could not decode one or both uploaded images. Please upload valid image files.")
-        else:
-            color_base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR)
-            buffer_zone_mask = generate_buffer_zone_mask(color_base_image)
-            result_image, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask)
+    if base_image is None or test_image is None:
+        st.error("Error: Could not decode one or both uploaded images. Please upload valid image files.")
+    else:
+        color_base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR)
+        buffer_zone_mask = generate_buffer_zone_mask(color_base_image)
+        result_image, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask)
 
-            col1, col2 = st.columns(2)
-            with col1:
-                st.image(base_image, caption="Base Image", use_column_width=True, channels="GRAY")
-            with col2:
-                st.image(test_image, caption="Test Image", use_column_width=True, channels="GRAY")
-            st.image(result_image, caption="Change Detection with Water as Black", use_column_width=True, channels="GRAY")
-            st.write(f"Change Detected: {change_percentage:.2f}%")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.image(base_image, caption="Base Image", use_column_width=True, channels="GRAY")
+        with col2:
+            st.image(test_image, caption="Test Image", use_column_width=True, channels="GRAY")
+        st.image(result_image, caption="Change Detection with Water as Black", use_column_width=True, channels="GRAY")
+        st.write(f"Change Detected: {change_percentage:.2f}%")
 
-            if change_percentage > 5.0:
-                change_image_path = "detected_change.jpg"
-                cv2.imwrite(change_image_path, result_image)
-                send_email_alert(change_percentage, change_image_path, receiver_email)
-                send_telegram_alert(change_percentage, change_image_path)
+        if change_percentage > 5.0:
+            change_image_path = "detected_change.jpg"
+            cv2.imwrite(change_image_path, result_image)
+            send_email_alert(change_percentage, change_image_path, receiver_email)
+            send_telegram_alert(change_percentage, change_image_path)
 
-    if st.button("Clear and Restart"):
-        reset_session()
+if st.button("Clear and Restart"):
+    reset_session()
