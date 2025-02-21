@@ -116,3 +116,6 @@ if base_image_file and test_image_file and receiver_email:
             cv2.imwrite(change_image_path, result_image)
             send_email_alert(change_percentage, change_image_path, receiver_email)
             send_telegram_alert(change_percentage, change_image_path)
+
+        if st.button("Clear and Restart"):
+            st.experimental_rerun()
