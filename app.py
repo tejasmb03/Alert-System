@@ -100,8 +100,13 @@ with col1:
     base_image_file = st.file_uploader("Upload Base Image", type=["png", "jpg", "jpeg"], key="base")
 with col2:
     test_image_file = st.file_uploader("Upload Test Image", type=["png", "jpg", "jpeg"], key="test")
+with col3:
+    receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
+    email_selected = st.checkbox("Email")
+    telegram_selected = st.checkbox("Telegram")
+    both_selected = st.checkbox("Both")
 
-if base_image_file and test_image_file:
+if base_image_file and test_image_file and receiver_email:
     base_file_bytes = base_image_file.read()
     test_file_bytes = test_image_file.read()
 
@@ -117,3 +122,17 @@ if base_image_file and test_image_file:
 
     col3.image(result_image, caption="Change Detection", use_column_width=True, channels="GRAY")
     st.write(f"Change Detected: {change_percentage:.2f}%")
+
+    if change_percentage > 5.0:
+        change_image_path = "detected_change.jpg"
+        cv2.imwrite(change_image_path, result_image)
+        if email_selected:
+            send_email_alert(change_percentage, change_image_path, receiver_email)
+        if telegram_selected:
+            send_telegram_alert(change_percentage, change_image_path)
+        if both_selected:
+            send_email_alert(change_percentage, change_image_path, receiver_email)
+            send_telegram_alert(change_percentage, change_image_path)
+
+    if st.button("Clear and Restart", type="primary"):
+        reset_session()
