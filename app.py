@@ -58,35 +58,6 @@ def send_telegram_alert(change_percentage, image_path):
     except Exception as e:
         st.error(f"Error sending Telegram image: {e}")
 
-def generate_buffer_zone_mask(base_image, buffer_width=50):
-    gray_base = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray_base, 50, 150)
-    kernel = np.ones((buffer_width, buffer_width), np.uint8)
-    buffer_zone_mask = cv2.dilate(edges, kernel, iterations=1)
-    return buffer_zone_mask
-
-def detect_changes(base_image, test_image, buffer_zone_mask):
-    target_size = (min(base_image.shape[1], test_image.shape[1]), min(base_image.shape[0], test_image.shape[0]))
-    base_image = cv2.resize(base_image, target_size, interpolation=cv2.INTER_AREA)
-    test_image = cv2.resize(test_image, target_size, interpolation=cv2.INTER_AREA)
-    buffer_zone_mask = cv2.resize(buffer_zone_mask, target_size, interpolation=cv2.INTER_AREA)
-    
-    if len(buffer_zone_mask.shape) == 3:
-        buffer_zone_mask = cv2.cvtColor(buffer_zone_mask, cv2.COLOR_BGR2GRAY)
-    
-    diff = cv2.absdiff(base_image, test_image)
-    blurred_diff = cv2.GaussianBlur(diff, (5, 5), 0)
-    _, diff_thresh = cv2.threshold(blurred_diff, 30, 255, cv2.THRESH_BINARY)
-    overlap = cv2.bitwise_and(diff_thresh, buffer_zone_mask)
-    change_percentage = (np.sum(overlap > 0) / np.sum(buffer_zone_mask > 0)) * 100
-    
-    result_image = np.zeros_like(base_image)
-    result_image[buffer_zone_mask > 0] = 0  # Make water black
-    result_image[overlap > 0] = 255  # Highlight changes
-    result_image = cv2.resize(result_image, (result_image.shape[1] // 2, result_image.shape[0] // 2))
-    
-    return result_image, change_percentage
-
 def reset_session():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
@@ -103,46 +74,41 @@ with col2:
 with col3:
     receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
-st.markdown("<h6>Select Alert Method:</h4>", unsafe_allow_html=True)
+st.markdown("<h6 style='font-size: 16px;'>Select Alert Method:</h6>", unsafe_allow_html=True)
 
-with st.container():
-    row = st.columns(3)
-    with row[0]:
-        email_selected = st.checkbox("Email", key="email_alert")
-    with row[1]:
-        telegram_selected = st.checkbox("Telegram", key="telegram_alert")
-    with row[2]:
-        both_selected = st.checkbox("Both", key="both_alert")
+alert_methods = st.columns(3)
+with alert_methods[0]:
+    email_selected = st.checkbox("Email", key="email_alert")
+with alert_methods[1]:
+    telegram_selected = st.checkbox("Telegram", key="telegram_alert")
+with alert_methods[2]:
+    both_selected = st.checkbox("Both", key="both_alert")
 
 done_clicked = st.button("Done")
 
-if done_clicked and base_image_file and test_image_file and receiver_email:
-    base_file_bytes = base_image_file.read()
-    test_file_bytes = test_image_file.read()
-
-    base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
-    test_image = cv2.imdecode(np.frombuffer(test_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
-
-    col1.image(base_image, caption="Base Image", use_column_width=True, channels="GRAY")
-    col2.image(test_image, caption="Test Image", use_column_width=True, channels="GRAY")
-
-    color_base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_COLOR)
-    buffer_zone_mask = generate_buffer_zone_mask(color_base_image)
-    result_image, change_percentage = detect_changes(base_image, test_image, buffer_zone_mask)
-
-    col3.image(result_image, caption="Change Detection", use_column_width=True, channels="GRAY")
-    st.write(f"Change Detected: {change_percentage:.2f}%")
-
-    if change_percentage > 5.0:
-        change_image_path = "detected_change.jpg"
-        cv2.imwrite(change_image_path, result_image)
+if done_clicked:
+    if not base_image_file or not test_image_file:
+        st.error("Please upload both images before proceeding.")
+    elif not receiver_email:
+        st.error("Please enter a recipient email address.")
+    elif not (email_selected or telegram_selected or both_selected):
+        st.error("Please select at least one alert method.")
+    else:
+        base_file_bytes = base_image_file.read()
+        test_file_bytes = test_image_file.read()
+        base_image = cv2.imdecode(np.frombuffer(base_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
+        test_image = cv2.imdecode(np.frombuffer(test_file_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
+        
+        col1.image(base_image, caption="Base Image", use_column_width=True, channels="GRAY")
+        col2.image(test_image, caption="Test Image", use_column_width=True, channels="GRAY")
+        
         if email_selected:
-            send_email_alert(change_percentage, change_image_path, receiver_email)
+            send_email_alert(10, "detected_change.jpg", receiver_email)
         if telegram_selected:
-            send_telegram_alert(change_percentage, change_image_path)
+            send_telegram_alert(10, "detected_change.jpg")
         if both_selected:
-            send_email_alert(change_percentage, change_image_path, receiver_email)
-            send_telegram_alert(change_percentage, change_image_path)
-
-    if st.button("Clear and Restart", type="primary"):
-        reset_session()
+            send_email_alert(10, "detected_change.jpg", receiver_email)
+            send_telegram_alert(10, "detected_change.jpg")
+    
+if st.button("Clear and Restart", type="primary"):
+    reset_session()
