@@ -103,7 +103,7 @@ with col2:
 with col3:
     receiver_email = st.text_input("Enter recipient email for alerts:", key="email")
 
-st.markdown("<small>### Select Alert Method:</small>", unsafe_allow_html=True)
+st.markdown("<small> Select Alert Method:</small>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
 with col1:
     email_selected = st.checkbox("Email")
