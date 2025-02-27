@@ -2,8 +2,11 @@ import cv2
 import numpy as np
 import smtplib
 import os
-import requests 
+import requests
 import streamlit as st
+
+# Ensure scikit-image is installed
+os.system("pip install scikit-image")
 from skimage.metrics import structural_similarity as ssim
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
