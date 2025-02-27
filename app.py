@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import smtplib
 import os
-import requests
+import requests 
 import streamlit as st
 from skimage.metrics import structural_similarity as ssim
 from email.mime.text import MIMEText
